@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Historic Automotive Greens</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={darkMode:'class'}</script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body{background:#1c1917;color:#e7e5e4;font-family:system-ui,sans-serif}
+    input[type=range]{accent-color:#059669}
+    .card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,.5)}
+    .card{transition:transform .2s ease,box-shadow .2s ease}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const Sun = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>;
+const Moon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
+const Info = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>;
+const Bucket = () => <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>;
+
+const candidates = [
+  { id:'porsche', manufacturer:'Porsche', name:'Brewster Green', oemCode:'22B', internalCode:'PPG 933188', hex:'#16231E', profile:'Extremely dark, near-black in low light. Highly saturated forest tone. Excellent proxy for the dark flop angle of Highland Green.' },
+  { id:'pontiac', manufacturer:'Pontiac (General Motors)', name:'Brewster Green', oemCode:'48 / 4325', internalCode:'PPG 2531', hex:'#23291B', profile:'Distinct olive undertone, highly period-correct for the 1960s/1970s muscle car aesthetic. Very close match to Ford\'s underlying pigment structure.' },
+  { id:'mg', manufacturer:'MG / Austin Healey', name:'British Racing Green No. 1', oemCode:'BLGN29 / GN29', internalCode:'PPG 47956', hex:'#0A3B22', profile:'Classic European sports car green. Slightly brighter and more vivid than Highland Green, lacking the extreme black-olive depth.' },
+  { id:'fleet', manufacturer:'Commercial Fleet', name:'British Racing Green', oemCode:'44524', internalCode:'N/A', hex:'#11301F', profile:'Pure, utilitarian solid green. Utterly flat and optically stable in all lighting conditions.' },
+  { id:'mazda', manufacturer:'Mazda', name:'British Racing Green', oemCode:'HU', internalCode:'N/A', hex:'#0D3624', profile:'1991 single-stage solid green. Deep and rich, providing a reliable, modern formulation standard without clearcoat requirements.' },
+  { id:'ral', manufacturer:'RAL Classic', name:'Moss Green', oemCode:'RAL 6005', internalCode:'N/A', hex:'#0F4C3A', profile:'Universally standardized European industrial green. Excellent consistency globally.' },
+  { id:'fs', manufacturer:'Federal Standard', name:'Green', oemCode:'FS 34094', internalCode:'N/A', hex:'#373F2F', profile:'Military-spec olive green. When mixed in a high-gloss binder, yields a severe, aggressive hue reminiscent of the Bullitt vehicle.' },
+  { id:'sherwin', manufacturer:'Sherwin Williams', name:'Green/Black', oemCode:'6994', internalCode:'N/A', hex:'#0A120E', profile:'A proprietary, non-metallic mix targeting the absolute darkest threshold of green.' }
+];
+
+function colorDistance(a, b) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const [ra,ga,ba] = [(pa>>16)&255,(pa>>8)&255,pa&255];
+  const [rb,gb,bb] = [(pb>>16)&255,(pb>>8)&255,pb&255];
+  return Math.round(Math.sqrt((ra-rb)**2+(ga-gb)**2+(ba-bb)**2));
+}
+
+const TARGET = '#1B2A20';
+
+function App() {
+  const [brightness, setBrightness] = useState(100);
+  const [angle, setAngle] = useState(135);
+  const [sortBy, setSortBy] = useState('default');
+
+  const sorted = [...candidates].sort((a, b) => {
+    if (sortBy === 'darkness') {
+      const lum = h => { const c=parseInt(h.slice(1),16); return 0.2126*((c>>16)&255)+0.7152*((c>>8)&255)+0.0722*(c&255); };
+      return lum(a.hex) - lum(b.hex);
+    }
+    if (sortBy === 'closest') return colorDistance(a.hex, TARGET) - colorDistance(b.hex, TARGET);
+    return 0;
+  });
+
+  return (
+    <div className="min-h-screen bg-stone-900 text-stone-200 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+
+        <header className="border-b border-stone-700 pb-6">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
+            <span className="text-emerald-600"><Bucket /></span>
+            Historic Automotive Greens
+          </h1>
+          <p className="text-stone-400 text-lg max-w-3xl">
+            Visualizing single-stage solid proxy candidates for the iconic 1968 Ford Highland Green (M3067).
+          </p>
+        </header>
+
+        <div className="bg-stone-800 rounded-xl p-6 border border-stone-700 shadow-lg">
+          <div className="flex flex-col md:flex-row gap-6 items-center">
+            <div className="w-full md:w-1/3 h-32 rounded-lg shadow-inner overflow-hidden relative">
+              <div className="absolute inset-0" style={{background:`linear-gradient(${angle}deg, #2D4233 0%, #17241A 50%, #0F1711 100%)`,filter:`brightness(${brightness}%)`}} />
+              <div className="absolute inset-0 opacity-20" style={{backgroundImage:'radial-gradient(circle, #fff 1px, transparent 1px)',backgroundSize:'4px 4px'}} />
+              <div className="absolute top-2 right-2 bg-black/60 px-2 py-1 rounded text-xs font-semibold tracking-wide text-white">METALLIC TARGET</div>
+            </div>
+            <div className="w-full md:w-2/3 space-y-2">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                1968 Ford Highland Green
+                <span className="text-sm font-normal px-2 py-1 bg-stone-700 rounded-md text-stone-300">Code R / M3067</span>
+              </h2>
+              <p className="text-sm text-stone-400 leading-relaxed">
+                The original baseline. A complex metallic mix with a light-dark "flop" depending on viewing angle. Removing metallic flake causes color failure, necessitating the solid proxies below.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-stone-800/50 p-6 rounded-xl border border-stone-700/50 backdrop-blur-sm sticky top-4 z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-white flex items-center gap-2"><span className="text-amber-500"><Sun /></span>Lighting</h3>
+                <span className="text-sm text-stone-400 font-mono bg-stone-900 px-2 py-1 rounded">{brightness}%</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-stone-500"><Moon /></span>
+                <input type="range" min="30" max="150" value={brightness} onChange={e=>setBrightness(Number(e.target.value))} className="flex-1 h-2 bg-stone-700 rounded-lg appearance-none cursor-pointer" />
+                <span className="text-stone-500"><Sun /></span>
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-white">Flop Angle</h3>
+                <span className="text-sm text-stone-400 font-mono bg-stone-900 px-2 py-1 rounded">{angle}°</span>
+              </div>
+              <input type="range" min="0" max="360" value={angle} onChange={e=>setAngle(Number(e.target.value))} className="w-full h-2 bg-stone-700 rounded-lg appearance-none cursor-pointer" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-stone-700/50">
+            <p className="text-xs text-stone-500 flex items-center gap-1"><Info /> Adjust lighting and flop angle to simulate the illusion-of-darkness effect.</p>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-stone-400">Sort:</label>
+              <select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="text-xs bg-stone-900 border border-stone-700 text-stone-300 rounded px-2 py-1">
+                <option value="default">Default</option>
+                <option value="darkness">Darkest first</option>
+                <option value="closest">Closest to target</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {sorted.map(color => (
+            <div key={color.id} className="card bg-stone-800 rounded-xl overflow-hidden border border-stone-700 flex flex-col">
+              <div className="h-40 w-full relative">
+                <div className="absolute inset-0 transition-all duration-300" style={{backgroundColor:color.hex,filter:`brightness(${brightness}%)`}} />
+                <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
+                <div className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded text-xs font-mono text-stone-300">{color.hex}</div>
+              </div>
+              <div className="p-5 flex flex-col flex-grow">
+                <div className="mb-3">
+                  <div className="text-xs text-stone-400 font-semibold tracking-wider uppercase mb-1">{color.manufacturer}</div>
+                  <h3 className="text-xl font-bold text-white">{color.name}</h3>
+                </div>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="px-2 py-1 bg-stone-900 text-stone-300 text-xs font-mono rounded border border-stone-700">OEM: {color.oemCode}</span>
+                  <span className="px-2 py-1 bg-stone-900 text-stone-300 text-xs font-mono rounded border border-stone-700">Mix: {color.internalCode}</span>
+                </div>
+                <p className="text-sm text-stone-400 leading-relaxed flex-grow">{color.profile}</p>
+                <div className="mt-3 pt-3 border-t border-stone-700/50">
+                  <span className="text-xs text-stone-500">Δ from target: <span className="text-stone-300 font-mono">{colorDistance(color.hex, TARGET)}</span></span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <footer className="border-t border-stone-700 pt-6 text-center text-xs text-stone-600">
+          Highland Green proxy reference · JackReis/paint
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
